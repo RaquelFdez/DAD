@@ -38,12 +38,13 @@ public class RestServerDataBase extends AbstractVerticle {
 			}
 		});
 	router.route().handler(BodyHandler.create());
-	router.get("/comidas").handler(this::handleAllSensors);
-	router.put("/comidas").handler(this::handleProductProperty);
+	router.get("/comidas").handler(this::getComidas);
+	router.put("/add").handler(this::anyadirComida);
+	router.delete("/borrar").handler(this::borrarComidas);
 }
 	
 	
-	private void handleAllSensors(RoutingContext routingConext) {
+	private void getComidas(RoutingContext routingConext) {
 		mySQLClient.getConnection(connection -> {
 			if (connection.succeeded()) {
 				connection.result().query("SELECT * FROM Dispensador.Comida" , result -> {
@@ -65,11 +66,39 @@ public class RestServerDataBase extends AbstractVerticle {
 		});
 	}
 	
-	private void handleProductProperty(RoutingContext routingContext) {
+	private void anyadirComida(RoutingContext routingContext) {
 		mySQLClient.getConnection(connection -> {
 			if(connection.succeeded()) {
 				System.out.println(routingContext.getBodyAsJson().encodePrettily());
-				connection.result().update("INSERT INTO Dispensador.Comida (nombre, horas, pesosPlato, pesosDeposito, pesosAviso) VALUES ('" + routingContext.getBodyAsJson().getString("nombre") + "',1800,200,10000,2000)", res->{
+				connection.result().update("INSERT INTO Dispensador.Comida (nombre, horas, pesosPlato, pesosDeposito, pesosAviso) VALUES ('" + routingContext.getBodyAsJson().getString("nombre") 
+						+"','" + routingContext.getBodyAsJson().getInteger("horas") +"','" + routingContext.getBodyAsJson().getInteger("pesosPlato")
+						+"','" + routingContext.getBodyAsJson().getInteger("pesosDeposito") +"','" 
+						+ routingContext.getBodyAsJson().getInteger("pesosAviso") +"')", res->{
+					if(res.succeeded()) {
+						UpdateResult result = res.result();
+					    System.out.println("Updated no. of rows: " + result.getUpdated());
+					    System.out.println("Generated keys: " + result.getKeys());
+					    routingContext.response().setStatusCode(201).end(result.getKeys().encodePrettily());
+					}else {
+						System.out.println(res.cause().getMessage());
+						routingContext.response().setStatusCode(400).end();
+					}
+					connection.result().close();
+				});
+			}else {
+				connection.result().close();
+				System.out.println(connection.cause().getMessage());
+				routingContext.response().setStatusCode(400).end();
+			}
+		});
+	}
+	private void borrarComidas(RoutingContext routingContext) {
+		mySQLClient.getConnection(connection -> {
+			if(connection.succeeded()) {
+				System.out.println(routingContext.getBodyAsJson().encodePrettily());
+				connection.result().update("DELETE FROM Dispensador.Comida WHERE idComida="  
+							+ routingContext.getBodyAsJson().getInteger("idComida"), res->{
+						
 					if(res.succeeded()) {
 						UpdateResult result = res.result();
 					    System.out.println("Updated no. of rows: " + result.getUpdated());
