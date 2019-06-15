@@ -174,6 +174,42 @@ void makeGetRequest(){
      Serial.println(root.as<String>());
 
   }
+  if(hora==0 && peso==0){
+    String url = "http://";
+    url += http_server;
+    url += ":";
+    url += http_server_port;
+    url += "/PrimeraComida/";
+    String message = "Enviando petición GET al servidor REST. ";
+    message += url;
+
+    Serial.println(message);
+
+    http.begin(url);
+    // Realizamos la petición y obtenemos el código de estado de la respuesta
+    int httpCode = http.GET();
+    Serial.printf("\nRespuesta servidor REST %d\n", httpCode);
+
+
+    if (httpCode > 0)
+    {
+     // Si el código devuelto es > 0, significa que tenemos respuesta, aunque
+     // no necesariamente va a ser positivo (podría ser un código 400).
+     // Obtenemos el cuerpo de la respuesta y lo imprimimos por el puerto serie
+     String payload = http.getString();
+     Serial.println("payload: " + payload);
+
+     const size_t bufferSize = JSON_OBJECT_SIZE(1) + 370;
+     DynamicJsonDocument root(bufferSize);
+     deserializeJson(root, payload);
+     const char* Nombre= root["nombre"];
+     hora = root[0]["horas"];
+     peso = root[0]["pesosPlato"];
+
+     Serial.println(root.as<String>());
+
+  }
+  }
 
 
     // Cerramos la conexión con el servidor REST
