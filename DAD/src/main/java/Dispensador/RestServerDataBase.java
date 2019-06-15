@@ -41,6 +41,9 @@ public class RestServerDataBase extends AbstractVerticle {
 	router.get("/comidas").handler(this::getComidas);
 	router.put("/add").handler(this::anyadirComida);
 	router.delete("/borrar").handler(this::borrarComidas);
+	router.get("/comidaProxima").handler(this::getComidaP);
+	router.get("/PrimeraComida").handler(this::getComida1);
+
 }
 	
 	
@@ -52,6 +55,56 @@ public class RestServerDataBase extends AbstractVerticle {
 						String jsonResult = result.result().toJson().encodePrettily();
 						routingConext.response().end(new JsonArray(result.result().getRows()).encodePrettily());
 						System.out.println(jsonResult);
+					}else {
+						System.out.println(result.cause().getMessage());
+						routingConext.response().setStatusCode(400).end();
+					}
+					connection.result().close();
+				});
+			}else {
+				connection.result().close();
+				System.out.println(connection.cause().getMessage());
+				routingConext.response().setStatusCode(400).end();
+			}
+		});
+	}
+	
+	private void getComidaP(RoutingContext routingConext) {
+		mySQLClient.getConnection(connection -> {
+			if (connection.succeeded()) {
+				connection.result().query("SELECT * FROM Dispensador.Comida where horas >= (select((select hour(now())*100 )+ (select minute(now())))) order by horas Limit 1", result -> {
+					if (result.succeeded()) {
+						String jsonResult = result.result().toJson().encodePrettily();
+						routingConext.response().end(new JsonArray(result.result().getRows()).encodePrettily());
+						System.out.println(jsonResult);
+						
+							
+						
+					}else {
+						System.out.println(result.cause().getMessage());
+						routingConext.response().setStatusCode(400).end();
+					}
+					connection.result().close();
+				});
+			}else {
+				connection.result().close();
+				System.out.println(connection.cause().getMessage());
+				routingConext.response().setStatusCode(400).end();
+			}
+		});
+	}
+	
+	private void getComida1(RoutingContext routingConext) {
+		mySQLClient.getConnection(connection -> {
+			if (connection.succeeded()) {
+				connection.result().query("SELECT * FROM Dispensador.Comida  order by horas Limit 1", result -> {
+					if (result.succeeded()) {
+						String jsonResult = result.result().toJson().encodePrettily();
+						routingConext.response().end(new JsonArray(result.result().getRows()).encodePrettily());
+						System.out.println(jsonResult);
+						
+							
+						
 					}else {
 						System.out.println(result.cause().getMessage());
 						routingConext.response().setStatusCode(400).end();
