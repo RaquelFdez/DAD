@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+    <head>
+        <title>App</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+       <!--  <script>
+       
+        var request = new XMLHttpRequest;
+        request.open('GET', '/comidas');
+        request.onload = function () {
+            var data = JSON.parse(this.response);
+        
+            if(request.status >= 200 && request.status < 400){
+                
+                    var id = data[0].id;
+                    var nombre = data[0].nombre;
+                  	document.getElementById('id').value = id;
+                  	document.getElementById('nombre').value = nombre;
+                 alert('Datos cargados correctamente');
+
+            }else{
+              alert('No se pudieron cargar los datos');
+            }
+        };
+        request.onerror = function(){
+            alert('Fallo de conexión');
+        }
+        request.send();
+        </script>-->
+    </head>
+    <body>
+        
+        <h1>Bienvenido a DAC</h1>
+        <a href="comidas.html">Ver comidas registradas</a><br/>
+        <a href="anyadir.html">Registrar una comida nueva</a><br/>
+        <a href="eliminar.html">Eliminar una comida existente</a><br/>
+        <!-- <div>
+            <input type="text" id="nombre"/>
+            <input type="text" id="id"/>
+            <div id="estadoTabla"></div>
+        </div>
+        <h1>Lista de comidas</h1>
+        <table id='dataTable'></table>
+        <div id="estadoTabla"></div>
+        <h1>Añadir un acomida nueva</h1>
+        <div id="nuevaComida">
+               	<label>Hora y minutos de la comida:</label>
+                <input type="text" id="hora">
+                <input type="text"  id="minutos" ><br/>
+                <label>Peso:</label>
+                <input type="text" id="peso"><br/>
+                <label>Nombre de la comida:</label>
+                <input type="text" id="nombre"><br/>
+                <label>Id: </label>
+                <input type="text" id="id"><br/>
+               
+               <input type="text" id="titulo"><br/>
+            <button onclick="javascript:sendForm()">Guardar</button>
+            <div id="output"></div>
+        </div>
+        <br/>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+        <script src="script.js"></script>-->
+    </body>
+
+</html>
