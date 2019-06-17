@@ -2,6 +2,7 @@ package Dispensador;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
+import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.asyncsql.AsyncSQLClient;
@@ -11,6 +12,7 @@ import io.vertx.ext.sql.UpdateResult;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
+import io.vertx.ext.web.handler.StaticHandler;
 
 public class RestServerDataBase extends AbstractVerticle {
 	
@@ -28,6 +30,12 @@ public class RestServerDataBase extends AbstractVerticle {
 
 
 	Router router = Router.router(vertx);
+	router.route("/").handler(routingContext->{
+		HttpServerResponse response = routingContext.response();
+		response.putHeader("content-type","text/html").end("<h1>Hello from my first Vert.x 3 application</h1>");
+	});
+	
+	router.route("/assets/*").blockingHandler(StaticHandler.create("assets"));
 	
 	vertx.createHttpServer().requestHandler(router).
 		listen(8090, result -> {
@@ -39,7 +47,7 @@ public class RestServerDataBase extends AbstractVerticle {
 		});
 	router.route().handler(BodyHandler.create());
 	router.get("/comidas").handler(this::getComidas);
-	router.put("/add").handler(this::anyadirComida);
+	router.post("/add").handler(this::anyadirComida);
 	router.delete("/borrar").handler(this::borrarComidas);
 	router.get("/comidaProxima").handler(this::getComidaP);
 	router.get("/PrimeraComida").handler(this::getComida1);
@@ -123,10 +131,9 @@ public class RestServerDataBase extends AbstractVerticle {
 		mySQLClient.getConnection(connection -> {
 			if(connection.succeeded()) {
 				System.out.println(routingContext.getBodyAsJson().encodePrettily());
-				connection.result().update("INSERT INTO Dispensador.Comida (nombre, horas, pesosPlato, pesosDeposito, pesosAviso) VALUES ('" + routingContext.getBodyAsJson().getString("nombre") 
+				connection.result().update("INSERT INTO Dispensador.Comida (nombre, horas, pesosPlato) VALUES ('" + routingContext.getBodyAsJson().getString("nombre") 
 						+"','" + routingContext.getBodyAsJson().getInteger("horas") +"','" + routingContext.getBodyAsJson().getInteger("pesosPlato")
-						+"','" + routingContext.getBodyAsJson().getInteger("pesosDeposito") +"','" 
-						+ routingContext.getBodyAsJson().getInteger("pesosAviso") +"')", res->{
+						+ "')", res->{
 					if(res.succeeded()) {
 						UpdateResult result = res.result();
 					    System.out.println("Updated no. of rows: " + result.getUpdated());
