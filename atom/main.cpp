@@ -9,11 +9,11 @@
 
 // Update these with values suitable for your network.
 
-const char* ssid = "MiFibra-E984";
-const char* password = "3WYQNXiL";
+const char* ssid = "Bjornphone";
+const char* password = "gonzalo11";
 const char* channel_name = "topic_2";
-const char* mqtt_server = "192.168.1.62";
-const char* http_server = "192.168.1.62";
+const char* mqtt_server = "192.168.43.203";
+const char* http_server = "192.168.43.203";
 const char* http_server_port = "8090";
 String clientId;
 int peso=0;
@@ -68,37 +68,6 @@ void setup_wifi() {
 
 }
 
-// Método llamado por el cliente MQTT cuando se recibe un mensaje en un canal
-// al que se encuentra suscrito. Los parámetros indican el canal (topic),
-// el contenido del mensaje (payload) y su tamaño en bytes (length)
-void callback(char* topic, byte* payload, unsigned int length) {
-  Serial.print("Mensaje recibido [canal: ");
-  Serial.print(topic);
-  Serial.print("] ");
-  // Leemos la información del cuerpo del mensaje. Para ello no sólo necesitamos
-  // el puntero al mensaje, si no su tamaño.
-  for (int i = 0; i < length; i++) {
-    Serial.print((char)payload[i]);
-  }
-  Serial.println();
-
-
-  DynamicJsonDocument doc(length);
-  deserializeJson(doc, payload, length);
-  const char* action = doc["action"];
-  Serial.printf("Acción %s\n", action);
-  // Encendemos un posible switch digital (un diodo led por ejemplo) si el
-  // contenido del cuerpo es 'on'
-  if (strcmp(action, "on") == 0) {
-    digitalWrite(BUILTIN_LED, HIGH);
-    Serial.println("Detectada acción de activación");
-  } else if (strcmp(action, "off") == 0) {
-    digitalWrite(BUILTIN_LED, LOW);
-    Serial.println("Detectada acción de desactivación");
-  } else{
-    Serial.println("Acción no reconocida");
-  }
-}
 
 // Función para la reconexión con el servidor MQTT y la suscripción al canal
 // necesario. También se fija el identificador del cliente
@@ -216,6 +185,35 @@ void makeGetRequest(){
     http.end();
 }
 
+// Método llamado por el cliente MQTT cuando se recibe un mensaje en un canal
+// al que se encuentra suscrito. Los parámetros indican el canal (topic),
+// el contenido del mensaje (payload) y su tamaño en bytes (length)
+
+void callback(char* topic, byte* payload, unsigned int length) {
+  Serial.print("Mensaje recibido [canal: ");
+  Serial.print(topic);
+  Serial.print("] ");
+  // Leemos la información del cuerpo del mensaje. Para ello no sólo necesitamos
+  // el puntero al mensaje, si no su tamaño.
+  for (int i = 0; i < length; i++) {
+    Serial.print((char)payload[i]);
+  }
+  Serial.println();
+
+
+  DynamicJsonDocument doc(length);
+  deserializeJson(doc, payload, length);
+  const char* action = doc["action"];
+  Serial.printf("Acción %s\n", action);
+  // Encendemos un posible switch digital (un diodo led por ejemplo) si el
+  // contenido del cuerpo es 'on'
+  if (strcmp(action, "actualiza") == 0) {
+    makeGetRequest();
+    Serial.println("Actualizacion.");
+  } else{
+    Serial.println("Acción no reconocida");
+  }
+}
 void dispensar( int peso){
   fsrReading = analogRead (fsrPin);
   //double pesoL= (fsrReading*10000.0)/1023.0;
@@ -231,6 +229,19 @@ void dispensar( int peso){
 
 
   }
+
+    // Construimos un objeto JSON con el contenido del mensaje a publicar
+    // en el canal.
+    StaticJsonDocument<200> doc;
+    doc["clientId"] = clientId;
+    doc["message"] = "Comida servida";
+
+    String output;
+    serializeJson(doc, output);
+    Serial.print("Mensaje publicado: ");
+    Serial.println(output);
+    client.publish(channel_name, output.c_str());
+
   delay(60000);
   makeGetRequest();
   Serial.printf("Peso nuevo: %d",  peso);
@@ -239,57 +250,17 @@ void dispensar( int peso){
 
 }
 
-// Método para hacer una petición PUT al servidor REST
-void makePutRequest(){
-    HTTPClient http;
-    // Abrimos la conexión con el servidor REST y definimos la URL del recurso
-    String url = "http://";
-    url += http_server;
-    url += ":";
-    url += http_server_port;
-    url += "/comidaProxima";
-
-    String message = "Enviando petición PUT al servidor REST. ";
-    message += url;
-    Serial.println(message);
-    // Realizamos la petición y obtenemos el código de estado de la respuesta
-    http.begin(url);
-
-    const size_t bufferSize = JSON_OBJECT_SIZE(1) + 370;
-    DynamicJsonDocument root(bufferSize);
-    root["last_update"] = 12412321;
-    root["value"] = "asf213124";
-    String json_string;
-    serializeJson(root, json_string);
-
-    int httpCode = http.PUT(json_string);
-
-    if (httpCode > 0)
-    {
-     // Si el código devuelto es > 0, significa que tenemos respuesta, aunque
-     // no necesariamente va a ser positivo (podría ser un código 400).
-     // Obtenemos el cuerpo de la respuesta y lo imprimimos por el puerto serie
-     String payload = http.getString();
-     Serial.println("payload put: " + payload);
-    }
-
-    Serial.printf("\nRespuesta servidor REST PUT %d\n", httpCode);
-    // Cerramos la conexión con el servidor REST
-    http.end();
-}
 
 // Método de inicialización de la lógica
 void setup() {
-  // Ajustamos el pinmode del pin de salida para poder controlar un
-  // switch digial (dido led por ejemplo)
-  pinMode(BUILTIN_LED, OUTPUT);
-  // Fijamos el baudrate del puerto de comunicación serie
+
 
   Serial.begin(115200); // activamos la conexión serial
   servo.attach(2);//D4
   servo.write(0);
   // Nos conectamos a la red WiFi
   setup_wifi();
+
   // Indicamos la dirección y el puerto del servidor donde se encuentra el
   // servidor MQTT
   client.setServer(mqtt_server, 1883);
@@ -297,47 +268,20 @@ void setup() {
   // un mensaje por parte de otro dispositivo en un canal al que el cliente
   // actual se encuentre suscrito
   client.setCallback(callback);
-    makeGetRequest();
+  makeGetRequest();
 }
 
 void loop() {
 
 
   // Nos conectamos al servidor MQTT en caso de no estar conectado previamente
-  /*if (!client.connected()) {
+  if (!client.connected()) {
     reconnect();
   }
   // Esperamos (de manera figurada) a que algún cliente suscrito al canal
   // publique un mensaje que será recibido por el dispositivo actual
   client.loop();
 
-  // Cada 2 segundos publicaremos un mensaje en el canal procedente del cliente
-  // actual. Esto se hace sin bloquear el loop ya que de lo contrario afectaría
-  // a la recepción de los mensajes MQTT
-/*  long now = millis();
-  if (now - lastMsg > 2000) {
-    lastMsg = now;
-    ++value;
-    // Construimos un objeto JSON con el contenido del mensaje a publicar
-    // en el canal.
-    StaticJsonDocument<200> doc;
-    doc["clientId"] = clientId;
-    doc["message"] = "periodic message";
-    doc["number"] = value;
-    String output;
-    serializeJson(doc, output);
-    Serial.print("Mensaje publicado: ");
-    Serial.println(output);
-    client.publish(channel_name, output.c_str());
-  }
-
-
-  if (now - lastMsgRest > 2000) {
-    lastMsgRest = now;
-    makeGetRequest();
-    makePutRequest();
-  }
-*/
 
   timeClient.update();
 
