@@ -243,8 +243,7 @@ void dispensar( int peso){
     client.publish(channel_name, output.c_str());
 
   delay(60000);
-  makeGetRequest();
-  Serial.printf("Peso nuevo: %d",  peso);
+
 
 
 
@@ -288,6 +287,8 @@ void loop() {
   Serial.println(timeClient.getFormattedTime());
   if((timeClient.getHours())*100+(timeClient.getMinutes()) == hora){
     dispensar(peso);
+    makeGetRequest();
+    Serial.printf("Peso nuevo: %d",  peso);
   }else{
 
     Serial.printf("%d\n", peso);
